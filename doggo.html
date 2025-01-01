@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doggo</title>
+
+    <style>
+        body{
+            background-color: #fff;
+        }
+        main{
+            max-width: 500px;
+            margin: 100px auto;
+            color: #3a3a3a;
+        }
+        #options button.correct{
+            background-color: lightgreen;
+        }
+        #options button.incorrect{
+            background-color: lightpink;
+        }
+        #options button{
+            width: 100%;
+            margin-bottom: 8px;
+            padding: 8px 0;
+            border: none;
+            background-color: rgb(230, 230, 230);
+            border-radius: 4px;
+            font-size: 15px;
+            cursor: pointer;
+            color: #3a3a3a;
+        }
+        #image-frame img{
+            width: 100%;
+            border-radius: 4px;
+        }
+        .card{
+            max-width: 470px;
+            border-radius: 8px;
+            box-shadow: 2px 2px 4px #000;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+    </style>
+
+</head>
+<body>
+    <main>
+        <header>
+            <h1>Guess the Doggo?</h1>  
+        </header>
+        <div class="card">
+            <p>What breed is the dog in this image?</p>
+            <div id="image-frame"></div>
+        </div>
+        <div id="options"></div>
+    </main>
+
+    <script type="text/javascript">
+        const RANDOM_IMG_ENDPOINT = "https://dog.ceo/api/breeds/image/random"
+        const BREEDS = ["affenpinscher", "african", "airedale", "akita", "appenzeller", "shepherd australian", "basenji", "beagle", "bluetick", "borzoi", "bouvier", "boxer", "brabancon", "briard", "norwegian buhund", "boston bulldog", "english bulldog", "french bulldog", "staffordshire bullterrier", "australian cattledog", "chihuahua", "chow", "clumber", "cockapoo", "border collie", "coonhound", "cardigan corgi", "cotondetulear", "dachshund", "dalmatian", "great dane", "scottish deerhound", "dhole", "dingo", "doberman", "norwegian elkhound", "entlebucher", "eskimo", "lapphund finnish", "bichon frise", "germanshepherd", "italian greyhound", "groenendael", "havanese", "afghan hound", "basset hound", "blood hound", "english hound", "ibizan hound", "plott hound", "walker hound", "husky", "keeshond", "kelpie", "komondor", "kuvasz", "labradoodle", "labrador", "leonberg", "lhasa", "malamute", "malinois", "maltese", "bull mastiff", "english mastiff", "tibetan mastiff", "mexicanhairless", "mix", "bernese mountain", "swiss mountain", "newfoundland", "otterhound", "caucasian ovcharka", "papillon", "pekinese", "pembroke", "miniature pinscher", "pitbull", "german pointer", "germanlonghair pointer", "pomeranian", "medium poodle", "miniature poodle", "standard poodle", "toy poodle", "pug", "puggle", "pyrenees", "redbone", "chesapeake retriever", "curly retriever", "flatcoated retriever", "golden retriever", "rhodesian ridgeback", "rottweiler", "saluki", "samoyed", "schipperke", "giant schnauzer", "miniature schnauzer", "english setter", "gordon setter", "irish setter", "sharpei", "english sheepdog", "shetland sheepdog", "shiba", "shihtzu", "blenheim spaniel", "brittany spaniel", "cocker spaniel", "irish spaniel", "japanese spaniel", "sussex spaniel", "welsh spaniel", "english springer", "stbernard", "american terrier", "australian terrier", "bedlington terrier", "border terrier", "cairn terrier", "dandie terrier", "fox terrier", "irish terrier", "kerryblue terrier", "lakeland terrier", "norfolk terrier", "norwich terrier", "patterdale terrier", "russell terrier", "scottish terrier", "sealyham terrier", "silky terrier", "tibetan terrier", "toy terrier", "welsh terrier", "westhighland terrier", "wheaten terrier", "yorkshire terrier", "tervuren", "vizsla", "spanish waterdog", "weimaraner", "whippet", "irish wolfhound"];
+        
+        function getRandomElement(array){
+            const i = Math.floor(Math.random()*array.length);
+            return array[i];
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function getMultipleChoices(n, correctAnswer, array){
+            const choices = [];
+            let choice;
+            choices.push(correctAnswer);
+            while(choices.length!=n){
+                choice = getRandomElement(array);
+                if(!choices.includes(choice)){
+                    choices.push(choice);
+                }
+            }  
+            return shuffleArray(choices);
+        }
+
+        function getBreedFromURL(url){
+            // url = "https://images.dog.ceo/breeds/poodle-standard/njndksfhnk.jpg"
+            const breed = url.split("/")[4].split('-').reverse().join(' ');
+            return breed;
+        }
+
+        async function fetchMessage(url){
+            const response = await fetch(url);
+            const body = await response.json();
+            const {message} = body;
+            return message;
+        }
+
+        function renderButtons(choicesArray, correctAnswer){
+            function buttonHandler(e) {
+                console.log("clicked");
+                if(e.target.value===correctAnswer){
+                    e.target.classList.add("correct");
+                } else{
+                    e.target.classList.add("incorrect");
+                    document.querySelector(`button[value="${correctAnswer}"]`).classList.add("correct");
+                }
+            }
+            const options = document.querySelector("#options");
+
+            for(let choice of choicesArray){
+                const button = document.createElement("button");
+                button.textContent = choice;
+                button.value=choice;
+                button.name=choice;
+                button.addEventListener('click',buttonHandler);
+                options.appendChild(button);
+            }
+        }
+
+        function renderQuiz(imgURL, correctAnswer, choices){
+            const image = document.createElement("img");
+            image.setAttribute("src",imgURL);
+            const frame = document.querySelector("#image-frame");
+            image.addEventListener('load',()=>{
+                frame.replaceChildren(image);
+                renderButtons(choices,correctAnswer);
+            })
+        }
+
+        async function loadQuizData(){
+            document.querySelector("#image-frame").textContent="Fetching doggo...";
+            const doggoImgURL = await fetchMessage(RANDOM_IMG_ENDPOINT);
+            const correctBreed = getBreedFromURL(doggoImgURL);
+            const breedChoices = getMultipleChoices(3,correctBreed,BREEDS);
+            return [doggoImgURL,correctBreed,breedChoices];
+        }
+
+        loadQuizData().then(([imgURL, correctAnswer, choices])=>renderQuiz(imgURL, correctAnswer, choices));
+        
+    </script>
+</body>
+</html>
